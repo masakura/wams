@@ -1,10 +1,13 @@
+var client;
+var refreshTodoItems;
+
 $(function() {
-    var client = new WindowsAzure.MobileServiceClient('https://masakura.azure-mobile.net/', 'dFauNYqxydJnqxJtnqjgnZKSVIthcl24'),
+    client = new WindowsAzure.MobileServiceClient('https://masakura.azure-mobile.net/', 'dFauNYqxydJnqxJtnqjgnZKSVIthcl24'),
         todoItemTable = client.getTable('todoitem');
 
     // Read current data and rebuild UI.
     // If you plan to generate complex UIs like this, consider using a JavaScript templating library.
-    function refreshTodoItems() {
+    refreshTodoItems = function() {
         var query = todoItemTable.where({ complete: false });
 
         query.read().then(function(todoItems) {
@@ -56,7 +59,35 @@ $(function() {
     $(document.body).on('click', '.item-delete', function () {
         todoItemTable.del({ id: getTodoItemId(this) }).then(refreshTodoItems, handleError);
     });
+});
 
-    // On initial load, start by fetching the current data
-    refreshTodoItems();
+function refreshAuthDisplay() {
+    var isLoggedIn = client.currentUser !== null;
+    $("#logged-in").toggle(isLoggedIn);
+    $("#logged-out").toggle(!isLoggedIn);
+
+    if (isLoggedIn) {
+        $("#login-name").text(client.currentUser.userId);
+        refreshTodoItems();
+    }
+}
+
+function logIn() {
+    client.login("google").then(refreshAuthDisplay, function(error){
+        alert(error);
+    });
+}
+
+function logOut() {
+    client.logout();
+    refreshAuthDisplay();
+    $('#summary').html('<strong>You must login to access data.</strong>');
+}
+
+// On page init, fetch the data and set up event handlers
+$(function () {
+     refreshAuthDisplay();
+     $('#summary').html('<strong>You must login to access data.</strong>');          
+     $("#logged-out button").click(logIn);
+     $("#logged-in button").click(logOut);
 });
