@@ -21,34 +21,28 @@ var createTableService = function(client) {
 };
 
 var createAzureService = function(client) {
+    var invokeTodoItem = function(method, options) {
+        options.method = method;
+        return client.invokeApi('todoitem', options);
+    };
+
     return {
         readTodoItems: function(filter) {
-            return client.invokeApi('todoitem', {
-                method: 'GET' ,
-                parameters: filter
-            })
+            return invokeTodoItem('GET', { parameters: filter })
             .then(function(results) { return results.result; });
         },
         insertTodoItem: function(item) {
-            return client.invokeApi('todoitem', {
-                method: 'POST',
-                body: item
-            })
+            return invokeTodoItem('POST', { body: item })
             .then(function(results) { return results.result; });
         },
         updateTodoItem: function(item) {
-            return client.invokeApi('todoitem', {
-                method: 'PUT',
-                body: item,
-                parameters: { id: item.id }
-            })
+            var filter = { id: item.id };
+            return invokeTodoItem('PUT', { body: item, parameters: filter })
             .then(function(results) { return results.result; });
         },
         deleteTodoItem: function(id) {
-            return client.invokeApi('todoitem', {
-                method: 'DELETE',
-                parameters: { id: id }
-            })
+            var filter = { id: id };
+            return invokeTodoItem('DELETE', { parameters: filter })
             .then(function(results) { return results.result; });
         }
     };
