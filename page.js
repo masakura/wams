@@ -1,9 +1,28 @@
 var client;
 var refreshTodoItems;
 
+var createTableService = function(client) {
+     var todoItemTable = client.getTable('todoitem');
+
+     return {
+         readTodoItems: function(filter) {
+             return todoItemTable.where(filter).read();
+         },
+         insertTodoItem: function(item) {
+             return todoItemTable.insert(item);
+         },
+         updateTodoItem: function(item) {
+             return todoItemTable.update(item);
+         },
+         deleteTodoItem: function(id) {
+             return todoItemTable.del({ id: id });
+         }
+     };
+};
+
 $(function() {
-    client = new WindowsAzure.MobileServiceClient('https://masakura.azure-mobile.net/', 'dFauNYqxydJnqxJtnqjgnZKSVIthcl24'),
-        todoItemTable = client.getTable('todoitem');
+    client = new WindowsAzure.MobileServiceClient('https://masakura.azure-mobile.net/', 'dFauNYqxydJnqxJtnqjgnZKSVIthcl24');
+    var service = createTableService(client);
 
     // Read current data and rebuild UI.
     // If you plan to generate complex UIs like this, consider using a JavaScript templating library.
@@ -21,7 +40,7 @@ $(function() {
             $('#summary').html('<strong>' + todoItems.length + '</strong> item(s)');
         };
 
-        todoItemTable.where({ complete: false }).read()
+        service.readTodoItems({ complete: false })
             .then(refresh, handleError);
     }
 
@@ -39,7 +58,7 @@ $(function() {
         var textbox = $('#new-item-text'),
             itemText = textbox.val();
         if (itemText !== '') {
-            todoItemTable.insert({ text: itemText, complete: false })
+            service.insertTodoItem({ text: itemText, complete: false })
                 .then(refreshTodoItems, handleError);
         }
         textbox.val('').focus();
@@ -49,19 +68,19 @@ $(function() {
     // Handle update
     $(document.body).on('change', '.item-text', function() {
         var newText = $(this).val();
-        todoItemTable.update({ id: getTodoItemId(this), text: newText })
+        service.updateTodoItem({ id: getTodoItemId(this), text: newText })
             .then(null, handleError);
     });
 
     $(document.body).on('change', '.item-complete', function() {
         var isComplete = $(this).prop('checked');
-        todoItemTable.update({ id: getTodoItemId(this), complete: isComplete })
+        service.updateTodoItem({ id: getTodoItemId(this), complete: isComplete })
             .then(refreshTodoItems, handleError);
     });
 
     // Handle delete
     $(document.body).on('click', '.item-delete', function () {
-        todoItemTable.del({ id: getTodoItemId(this) })
+        service.deleteTodoItem(getTodoItemId(this))
             .then(refreshTodoItems, handleError);
     });
 });
