@@ -20,9 +20,43 @@ var createTableService = function(client) {
      };
 };
 
+var createAzureService = function(client) {
+    return {
+        readTodoItems: function(filter) {
+            return client.invokeApi('todoitem', {
+                method: 'GET' ,
+                parameters: filter
+            })
+            .then(function(results) { return results.result; });
+        },
+        insertTodoItem: function(item) {
+            return client.invokeApi('todoitem', {
+                method: 'POST',
+                body: item
+            })
+            .then(function(results) { return results.result; });
+        },
+        updateTodoItem: function(item) {
+            return client.invokeApi('todoitem', {
+                method: 'PUT',
+                body: item,
+                parameters: { id: item.id }
+            })
+            .then(function(results) { return results.result; });
+        },
+        deleteTodoItem: function(id) {
+            return client.invokeApi('todoitem', {
+                method: 'DELETE',
+                parameters: { id: id }
+            })
+            .then(function(results) { return results.result; });
+        }
+    };
+};
+
 $(function() {
     client = new WindowsAzure.MobileServiceClient('https://masakura.azure-mobile.net/', 'dFauNYqxydJnqxJtnqjgnZKSVIthcl24');
-    var service = createTableService(client);
+    var service = createAzureService(client);
 
     // Read current data and rebuild UI.
     // If you plan to generate complex UIs like this, consider using a JavaScript templating library.
